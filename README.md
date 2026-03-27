@@ -1,77 +1,78 @@
+
 # AmneziaWG Web UI
 
-A comprehensive web-based management interface for AmneziaWG VPN servers. This service provides an easy-to-use web UI to create, manage, and monitor WireGuard VPN servers with AmneziaWG's advanced obfuscation features.
-All server configuration is done via web interface or via API endpoints. Providing env variables at docker startup is supported but doesn't make much sense: all settings can be overridden via web interface except for NGINX_PORT.
+Полнофункциональный веб-интерфейс для управления VPN-серверами AmneziaWG. Этот сервис предоставляет удобный веб-интерфейс для создания, управления и мониторинга VPN-серверов WireGuard с расширенными возможностями обфускации от AmneziaWG.  
+Вся конфигурация серверов выполняется через веб-интерфейс или через API-эндпоинты. Поддерживается передача переменных окружения при запуске Docker, однако в этом немного смысла: все настройки, кроме `NGINX_PORT`, можно переопределить через веб-интерфейс.
 
-<img src="screenshot2.png" alt="Web UI screenshot" width="50%"/>
-<img src="screenshot.png" alt="Web UI screenshot" width="50%"/>
+<img src="screenshot2.png" alt="Скриншот Web UI" width="50%"/>
+<img src="screenshot.png" alt="Скриншот Web UI" width="50%"/>
 
 > [!TIP]
-> For project description in **Russian** please refer to [author blog page](https://itprospb.ru/2025/11/web-ui-dlya-upravleniya-serverom-amneziawg/).
+> Для описания проекта на **русском языке** смотрите [страницу в блоге автора](https://itprospb.ru/2025/11/web-ui-dlya-upravleniya-serverom-amneziawg/).
 
-## 🚀 Features
+## 🚀 Возможности
 
-*   **Web-based Management**: Intuitive UI for managing VPN servers and clients
-*   **AmneziaWG Integration**: Full support for AmneziaWG's obfuscation features
-*   **Client Management**: Generate and download client configurations. Suspend and reactivate clients on live server.
-*   **Real-time Monitoring**: Live server status and connection monitoring
-*   **Auto-start**: Automatic server startup on container restart
-*   **IPTables Automation**: Automatic firewall configuration
-*   **Custom values**: MTU and other connection settings can be customized
-*   **QR code**: Client can be viewed, copied and downloaded via text, file or QR code
-*   **Config view**: Both servers' and clients' configs can be viewed directly from UI
-*   **Auto SSL support**: Automatic SSL cert deployment with certbot
-*   **AWG 1.5 and 2.0 support**: I1-I5 and S3-S4 values can be customized
-*   **Client data**: Clients' traffic, last handshake and IP are displayed and auto-refreshed
+* **Управление через веб-интерфейс**: интуитивно понятный UI для управления VPN-серверами и клиентами
+* **Интеграция с AmneziaWG**: полная поддержка функций обфускации AmneziaWG
+* **Управление клиентами**: генерация и скачивание клиентских конфигураций, приостановка и повторная активация клиентов на работающем сервере
+* **Мониторинг в реальном времени**: отображение состояния сервера и подключений в реальном времени
+* **Автозапуск**: автоматический запуск серверов после перезапуска контейнера
+* **Автоматизация IPTables**: автоматическая настройка правил брандмауэра
+* **Пользовательские значения**: можно настраивать MTU и другие параметры соединения
+* **QR-код**: конфигурацию клиента можно просмотреть, скопировать и скачать в виде текста, файла или QR-кода
+* **Просмотр конфигов**: конфигурации серверов и клиентов можно просматривать прямо в интерфейсе
+* **Автоматическая поддержка SSL**: автоматическое получение и установка SSL-сертификатов через certbot
+* **Поддержка AWG 1.5 и 2.0**: можно настраивать значения I1-I5 и S3-S4
+* **Данные клиентов**: отображаются трафик клиента, время последнего handshake и IP-адрес, данные обновляются автоматически
 
-## 🏗️ Architecture
+## 🏗️ Архитектура
 
-### Components
+### Компоненты
 
 **Flask Backend** (`app.py`)
 
-*   RESTful API for server management
-*   WebSocket support for real-time updates
-*   AmneziaWG configuration generation
-*   Client config management
+* RESTful API для управления серверами
+* Поддержка WebSocket для обновлений в реальном времени
+* Генерация конфигураций AmneziaWG
+* Управление клиентскими конфигурациями
 
 **Vue.js Frontend** (`static/js/app.js`)
 
-*   Responsive web interface
-*   Real-time status updates
-*   Form validation and error handling
+* Адаптивный веб-интерфейс
+* Обновление статуса в реальном времени
+* Валидация форм и обработка ошибок
 
 **Nginx** (`config/nginx.conf`)
 
-*   Reverse proxy for Flask application
-*   Static file serving
-*   WebSocket proxy support
+* Reverse proxy для Flask-приложения
+* Раздача статических файлов
+* Поддержка проксирования WebSocket
 
 **Supervisor** (`config/supervisord.conf`)
 
-*   Process management
-*   Automatic service restart
-*   Log management
+* Управление процессами
+* Автоматический перезапуск сервисов
+* Управление логами
 
-### Directory Structure
+### Структура каталогов
 
-```
+```text
 /app/web-ui/
-├── app.py # Flask application
+├── app.py # Flask-приложение
 ├── templates/
-│ └── index.html # Main web interface
+│   └── index.html # Основной веб-интерфейс
 └── static/
-├── js/
-│ └── app.js # Frontend JavaScript
-└── css/
-└── style.css # Custom styles
-```
+    ├── js/
+    │   └── app.js # Frontend JavaScript
+    └── css/
+        └── style.css # Пользовательские стили
+````
 
-## 🔧 API Endpoints
+## 🔧 API-эндпоинты
 
-### Server Management
+### Управление серверами
 
-#### Create Server
+#### Создание сервера
 
 ```yaml
 POST /api/servers
@@ -99,105 +100,105 @@ Content-Type: application/json
 }
 ```
 
-#### List Servers
+#### Список серверов
 
 `GET /api/servers`
 
-#### Start Server
+#### Запуск сервера
 
 `POST /api/servers/{server_id}/start`
 
-#### Stop Server
+#### Остановка сервера
 
 `POST /api/servers/{server_id}/stop`
 
-#### Delete Server
+#### Удаление сервера
 
 `DELETE /api/servers/{server_id}`
 
-#### Get Server Configuration
+#### Получение конфигурации сервера
 
 `GET /api/servers/{server_id}/config`
 
-#### Download Server Config
+#### Скачивание конфигурации сервера
 
 `GET /api/servers/{server_id}/config/download`
 
-#### Get Server Info
+#### Получение информации о сервере
 
 `GET /api/servers/{server_id}/info`
 
-### Client Management
+### Управление клиентами
 
-#### Add Client
+#### Добавление клиента
 
 ```yaml
 POST /api/servers/{server_id}/clients
 Content-Type: application/json
 {
-"name": "Alice's Phone"
+  "name": "Alice's Phone"
 }
 ```
 
-#### List Server Clients
+#### Список клиентов сервера
 
 `GET /api/servers/{server_id}/clients`
 
-#### Delete Client
+#### Удаление клиента
 
 `DELETE /api/servers/{server_id}/clients/{client_id}`
 
-#### Download Client Config in `text/plain` (.conf file)
+#### Скачивание конфигурации клиента в формате `text/plain` (`.conf` файл)
 
 `GET /api/servers/{server_id}/clients/{client_id}/config`
 
-#### Download Client Config in JSON format
+#### Скачивание конфигурации клиента в формате JSON
 
 `GET /api/servers/{server_id}/clients/{client_id}/config-both`
 
-#### List All Clients
+#### Список всех клиентов
 
 `GET /api/clients`
 
-### System Management
+### Управление системой
 
-#### System Status
+#### Статус системы
 
 `GET /api/system/status`
 
-#### Refresh Public IP
+#### Обновление публичного IP
 
 `GET /api/system/refresh-ip`
 
-#### IPTables Test
+#### Проверка IPTables
 
 `GET /api/system/iptables-test?server_id=wg_abc123`
 
-### Export Configuration
+### Экспорт конфигурации
 
 `GET /api/config/export`
 
-## 🐳 Docker Deployment
+## 🐳 Развёртывание через Docker
 
-Official docker image repository: https://hub.docker.com/r/alexishw/amneziawg-web-ui
+Официальный репозиторий Docker-образа: [https://hub.docker.com/r/alexishw/amneziawg-web-ui](https://hub.docker.com/r/alexishw/amneziawg-web-ui)
 
-### Environment Variables
+### Переменные окружения
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NGINX_PORT` | `80` | External port for web interface |
-| `NGINX_USER` | `admin` | Username for basic auth in the app |
-| `NGINX_PASSWORD` | `changeme` | Password for basic auth in the app |
-| `AUTO_START_SERVERS` | `true` | Auto-start servers on container startup |
-| `DEFAULT_MTU` | `1280` | Default MTU value for new servers. Effective only for api requests. For UI management set via UI. |
-| `DEFAULT_SUBNET` | `10.0.0.0/24` | Default subnet for new servers. Effective only for api requests. For UI management set via UI. |
-| `DEFAULT_PORT` | `51820` | Default port for new servers. Effective only for api requests. For UI management set via UI. |
-| `DEFAULT_DNS` | `8.8.8.8,1.1.1.1` | Default DNS servers for clients. Effective only for api requests. For UI management set via UI. |
-| `SSL_EMAIL` | `-` | Email used to register Let's encrypt account
-| `SSL_DOMAIN` | `-` | Domain used for SSL cert generation by certbot
-| `IP_LIST` | `-` | A list of IP addresses or IP ranges to allow connections from.
+| Переменная           | Значение по умолчанию | Описание                                                                                                                |
+| -------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `NGINX_PORT`         | `80`                  | Внешний порт веб-интерфейса                                                                                             |
+| `NGINX_USER`         | `admin`               | Имя пользователя для basic auth в приложении                                                                            |
+| `NGINX_PASSWORD`     | `changeme`            | Пароль для basic auth в приложении                                                                                      |
+| `AUTO_START_SERVERS` | `true`                | Автозапуск серверов при старте контейнера                                                                               |
+| `DEFAULT_MTU`        | `1280`                | Значение MTU по умолчанию для новых серверов. Действует только для API-запросов. Для управления через UI задаётся в UI. |
+| `DEFAULT_SUBNET`     | `10.0.0.0/24`         | Подсеть по умолчанию для новых серверов. Действует только для API-запросов. Для управления через UI задаётся в UI.      |
+| `DEFAULT_PORT`       | `51820`               | Порт по умолчанию для новых серверов. Действует только для API-запросов. Для управления через UI задаётся в UI.         |
+| `DEFAULT_DNS`        | `8.8.8.8,1.1.1.1`     | DNS-серверы по умолчанию для клиентов. Действует только для API-запросов. Для управления через UI задаётся в UI.        |
+| `SSL_EMAIL`          | `-`                   | Email, используемый для регистрации аккаунта Let's Encrypt                                                              |
+| `SSL_DOMAIN`         | `-`                   | Домен, используемый для генерации SSL-сертификата через certbot                                                         |
+| `IP_LIST`            | `-`                   | Список IP-адресов или диапазонов IP, которым разрешено подключение                                                      |
 
-### Docker Compose Example
+### Пример Docker Compose
 
 ```yaml
 version: '3.8'
@@ -228,10 +229,10 @@ services:
       - net.ipv6.conf.default.forwarding=1
     restart: unless-stopped
 volumes:
- amnezia-data:
+  amnezia-data:
 ```
 
-### Docker Run Example
+### Пример Docker Run
 
 ```bash
 docker run -d \
@@ -246,7 +247,7 @@ docker run -d \
   -p 9090:9090 \
   -p 51821:51821/udp \
   -e NGINX_PORT=9090 \
-  -e NGINX_PASSWORD=1234
+  -e NGINX_PASSWORD=1234 \
   -e AUTO_START_SERVERS=false \
   -e DEFAULT_MTU=1420 \
   -e DEFAULT_SUBNET=10.8.0.0/24 \
@@ -259,140 +260,144 @@ docker run -d \
   alexishw/amneziawg-web-ui:master
 ```
 
-## SSL certificates issue
+## Проблема с SSL-сертификатами
 
-When `SSL_EMAIL` and `SSL_DOMAIN` are specified, certbot requests certificate for the domain provided at docker container run.
-For this purpose you additionally need to expose `port 80`. It provides access only to the `/.well-known` endpoint, so there is no additional security risk introduced.
-You can't use a single port 80 both for the application and for the SSL deployment: if you wish to use ssl, set the custom port for the app.
+Если указаны `SSL_EMAIL` и `SSL_DOMAIN`, certbot при запуске Docker-контейнера запрашивает сертификат для указанного домена.
+Для этого дополнительно необходимо открыть `порт 80`. Он предоставляет доступ только к эндпоинту `/.well-known`, поэтому дополнительных рисков для безопасности это не создаёт.
+Нельзя использовать один и тот же порт 80 одновременно и для приложения, и для выпуска SSL-сертификата: если вы хотите использовать SSL, задайте для приложения отдельный порт.
 
-You can check if the certificate was issued by checking docker logs at the start or by viewing `/var/log/letsencrypt/letsencrypt.log` inside the container.
+Проверить, был ли выпущен сертификат, можно через логи Docker при запуске или просмотрев файл `/var/log/letsencrypt/letsencrypt.log` внутри контейнера.
 
-Cronjob to renew a certificate is also automatically created that runs every Tuesday.
+Также автоматически создаётся cron-задача для продления сертификата, которая выполняется каждый вторник.
 
-If you wish to keep the issued certificate during container recreation, you need to mount container folder to a host:
-`/etc/letsencrypt` or` /etc/letsencrypt/live`.
+Если вы хотите сохранить выпущенный сертификат при пересоздании контейнера, нужно примонтировать каталог контейнера на хост:
+`/etc/letsencrypt` или `/etc/letsencrypt/live`.
 
 > [!NOTE]
-> If you enable SSL support and want to have healthcheck continue working properly, you need to provide a https healthcheck URL at docker container start:
+> Если вы включаете поддержку SSL и хотите, чтобы healthcheck продолжал работать корректно, нужно задать HTTPS URL для healthcheck при запуске контейнера:
 > `--health-cmd='curl -f https://localhost:$NGINX_PORT/status || exit 1'`
 
-## Protection by IP address
+## Защита по IP-адресам
 
-You can protect your webserver by limiting connections to the it through the list of IP address(es) and IP range(s). To enable it you need to provide env variable `IP_LIST` at docker container run, e.g.
+Вы можете защитить свой веб-сервер, ограничив доступ к нему списком IP-адресов и диапазонов IP. Для этого при запуске Docker-контейнера нужно указать переменную окружения `IP_LIST`, например:
 `-e IP_LIST="100.200.101.201, 50.100.10.0/24"`
 
 > [!NOTE]
-> Take a note that in case you enable SSL for your server, you have to allow Let's Encrypt IP ranges. Here is a known CIDR used by Let's Encrypt, though is may vary country by country:
-`23.178.112.0/24`
+> Обратите внимание: если вы включаете SSL для сервера, нужно разрешить IP-диапазоны Let's Encrypt. Ниже приведён известный CIDR, используемый Let's Encrypt, хотя он может различаться в зависимости от страны:
+> `23.178.112.0/24`
 
-## 📊 Obfuscation Parameters
+## 📊 Параметры обфускации
 
-AmneziaWG supports advanced traffic obfuscation to bypass censorship and DPI (Deep Packet Inspection).
+AmneziaWG поддерживает расширенную обфускацию трафика для обхода цензуры и DPI (Deep Packet Inspection, глубокой инспекции пакетов).
 
-## Parameter Reference
+## Справочник параметров
 
-| Parameter | Range | Default | Recommended | Description |
-| --- | --- | --- | --- | --- |
-| `Jc` | 1-128 | 8 | 4-12 | Controls connection pattern frequency |
-| `Jmin` | 1-1279 | 8 | 8 | Minimum padding size for packets |
-| `Jmax` | Jmin+1 to 1280 | 80 | 80 | Maximum padding size for packets |
-| `S1` | 1-1132 | 50 | 15-150 | Obfuscation pattern parameter 1 |
-| `S2` | 1-1188 | 60 | 15-150 | Obfuscation pattern parameter 2 |
-| `H1` | 5-2147483647 | 1000 | Unique | Header obfuscation parameter 1 |
-| `H2` | 5-2147483647 | 2000 | Unique | Header obfuscation parameter 2 |
-| `H3` | 5-2147483647 | 3000 | Unique | Header obfuscation parameter 3 |
-| `H4` | 5-2147483647 | 4000 | Unique | Header obfuscation parameter 4 |
-| `MTU` | 1280-1440 | 1280 | 1280-1420 | Maximum Transmission Unit |
+| Параметр | Диапазон       | По умолчанию | Рекомендуется       | Описание                                                |
+| -------- | -------------- | ------------ | ------------------- | ------------------------------------------------------- |
+| `Jc`     | 1-128          | 8            | 4-12                | Управляет частотой применения шаблона соединения        |
+| `Jmin`   | 1-1279         | 8            | 8                   | Минимальный размер добавляемого заполнения для пакетов  |
+| `Jmax`   | Jmin+1 to 1280 | 80           | 80                  | Максимальный размер добавляемого заполнения для пакетов |
+| `S1`     | 1-1132         | 50           | 15-150              | Параметр 1 шаблона обфускации                           |
+| `S2`     | 1-1188         | 60           | 15-150              | Параметр 2 шаблона обфускации                           |
+| `H1`     | 5-2147483647   | 1000         | Уникальное значение | Параметр 1 обфускации заголовка                         |
+| `H2`     | 5-2147483647   | 2000         | Уникальное значение | Параметр 2 обфускации заголовка                         |
+| `H3`     | 5-2147483647   | 3000         | Уникальное значение | Параметр 3 обфускации заголовка                         |
+| `H4`     | 5-2147483647   | 4000         | Уникальное значение | Параметр 4 обфускации заголовка                         |
+| `MTU`    | 1280-1440      | 1280         | 1280-1420           | Максимальная единица передачи данных                    |
 
-## Detailed Parameter Explanation
+## Подробное описание параметров
 
-### Jc (Connection Parameter)
+### Jc (параметр соединения)
 
-*   **Purpose**: Controls how frequently connection patterns are applied
-*   **Lower values**: More frequent pattern application (more obfuscation, lower performance)
-*   **Higher values**: Less frequent pattern application (less obfuscation, better performance)
-*   **Recommended**: 4-12 for optimal balance
+* **Назначение**: определяет, как часто применяются шаблоны соединения
+* **Меньшие значения**: более частое применение шаблона (сильнее обфускация, ниже производительность)
+* **Большие значения**: более редкое применение шаблона (слабее обфускация, выше производительность)
+* **Рекомендуется**: 4-12 для оптимального баланса
 
-### Jmin and Jmax (Padding Parameters)
+### Jmin и Jmax (параметры заполнения)
 
-*   **Jmin**: Minimum random padding added to each packet
-*   **Jmax**: Maximum random padding added to each packet
-*   **Relationship**: Jmax must be greater than Jmin
-*   **Note**: Values are constrained by MTU (typically 1280 for basic internet)
+* **Jmin**: минимальное случайное заполнение, добавляемое к каждому пакету
+* **Jmax**: максимальное случайное заполнение, добавляемое к каждому пакету
+* **Связь**: Jmax должен быть больше Jmin
+* **Примечание**: значения ограничены MTU (обычно 1280 для базового интернета)
 
-### S1 and S2 (Pattern Parameters)
+### S1 и S2 (параметры шаблона)
 
-*   **Purpose**: Define obfuscation patterns for traffic shaping
-*   **Constraints**:
-    *   S1 ≤ 1132 (1280 - 148 = 1132)
-    *   S2 ≤ 1188 (1280 - 92 = 1188)
-    *   S1 + 56 ≠ S2 (must be different with margin)
-*   **Recommended**: 15-150 for effective obfuscation
+* **Назначение**: определяют шаблоны обфускации для формирования трафика
+* **Ограничения**:
 
-### H1-H4 (Header Parameters)
+  * S1 ≤ 1132 (1280 - 148 = 1132)
+  * S2 ≤ 1188 (1280 - 92 = 1188)
+  * S1 + 56 ≠ S2 (значения должны различаться с заданным отступом)
+* **Рекомендуется**: 15-150 для эффективной обфускации
 
-*   **Purpose**: Unique identifiers for header obfuscation
-*   **Requirement**: All four values must be unique
-*   **Recommended**: Use random values in range 1000-1000000
+### H1-H4 (параметры заголовка)
+
+* **Назначение**: уникальные идентификаторы для обфускации заголовков
+* **Требование**: все четыре значения должны быть уникальными
+* **Рекомендуется**: использовать случайные значения в диапазоне 1000-1000000
 
 ### MTU (Maximum Transmission Unit)
 
-*   **Purpose**: Defines maximum packet size
-*   **Standard Internet**: 1280 (safe for all connections)
-*   **Better Performance**: 1420-1440 (may have compatibility issues)
-*   **Trade-off**: Higher MTU = better performance but potential fragmentation
+* **Назначение**: определяет максимальный размер пакета
+* **Стандартный интернет**: 1280 (безопасно для всех соединений)
+* **Лучшая производительность**: 1420-1440 (возможны проблемы совместимости)
+* **Компромисс**: более высокий MTU = лучшая производительность, но возможна фрагментация
 
-## 📝 Logs and Monitoring
+## 📝 Логи и мониторинг
 
-### Application logs
+### Логи приложения
 
 `docker exec amnezia-web-ui tail -f /var/log/web-ui/access.log`
 
 `docker exec amnezia-web-ui tail -f /var/log/web-ui/error.log`
 
-### Nginx logs
+### Логи Nginx
 
 `docker exec amnezia-web-ui tail -f /var/log/nginx/access.log`
 
 `docker exec amnezia-web-ui tail -f /var/log/nginx/error.log`
 
-### Supervisor logs
+### Логи Supervisor
 
 `docker exec amnezia-web-ui tail -f /var/log/supervisor/supervisord.log`
 
-## 🔄 Backup and Restore
-Export Configuration
+## 🔄 Резервное копирование и восстановление
 
-### Export all configuration via API
+### Экспорт всей конфигурации через API
 
 `curl http://localhost/api/config/export > amnezia_backup.json`
 
-### Backup configuration directory
+### Резервное копирование каталога конфигурации
 
 `docker cp amnezia-web-ui:/etc/amnezia ./amnezia-backup/`
 
-## Debug Commands
+## Debug-команды
 
-### Check serv status
+### Проверка статуса сервиса
 
 `curl http://localhost/api/system/status`
 
-### Test iptables configuration
+### Проверка конфигурации iptables
 
 `curl "http://localhost/api/system/iptables-test?server_id=wg_abc123"`
 
-# Security
-The app is exposed directly on 80 or custom port with basic authentication.
+# Безопасность
+
+Приложение публикуется напрямую на порту 80 или на пользовательском порту и защищено basic authentication.
 
 > [!IMPORTANT]
-> I strongly recommend protecting endpoints with firewall and/or nginx authentication.
-> Basic auth alone is not strong enough and can be bruteforced.
+> Я настоятельно рекомендую дополнительно защищать эндпоинты с помощью firewall и/или аутентификации nginx.
+> Одной basic auth недостаточно, так как её можно подобрать перебором.
 
-By default, docker image is built with user `admin` and password `changeme`. To change the default behavior you need to provide with docker envs `NGINX_USER` and `NGINX_PASSWORD`.
+По умолчанию Docker-образ собирается с пользователем `admin` и паролем `changeme`. Чтобы изменить поведение по умолчанию, нужно передать переменные окружения `NGINX_USER` и `NGINX_PASSWORD`.
 
-I recommend enabling IP limitation together with other protection methods (see section `Protection by IP address` above).
+Я рекомендую включать ограничение по IP вместе с другими методами защиты (см. раздел `Защита по IP-адресам` выше).
 
-# Support
-The NO support provided as well as no regular updates are planned. Found issues can be fixed if free time permits.
+# Поддержка
 
-From Russia with L❤️VE
+Поддержка не предоставляется, и регулярные обновления не планируются. Обнаруженные проблемы могут быть исправлены только при наличии свободного времени.
+
+Из России с L❤️VE
+
+```
