@@ -239,12 +239,27 @@ services:
       SSL_EMAIL: "test@email.com"
       SSL_DOMAIN: "test.com"
 
+    volumes:
+      - amnezia-data:/etc/amnezia
+      - ssl:/etc/letsencrypt
+
+    networks:
+      - remnawave-network
+
+volumes:
+  amnezia-data:
+  ssl:
+
+networks:
+  remnawave-network:
+    external: true
+
 ```
 
 ### Сборка и запуск
 
 ```bash
-docer compose up --build -d
+docker compose up --build -d
 ```
 
 ## Проблема с SSL-сертификатами
