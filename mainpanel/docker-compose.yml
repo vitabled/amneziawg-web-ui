@@ -18,7 +18,7 @@ services:
       --sort-buffer-size=512K
       --join-buffer-size=512K
     env_file:
-      - .env
+      - env
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
       MYSQL_DATABASE: ${DB_DATABASE:-amnezia_panel}
@@ -46,7 +46,7 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - .env
+      - env
     environment:
       APP_ENV: ${APP_ENV:-local}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
