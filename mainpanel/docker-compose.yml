@@ -30,6 +30,8 @@ services:
       - db_data:/var/lib/mysql
       - ./migrations:/docker-entrypoint-initdb.d
       - ./my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    networks:
+      - amnezia-panel-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -59,6 +61,12 @@ services:
       - ./:/var/www/html
     ports:
       - "8082:80"
+    networks:
+      - amnezia-panel-network
 
 volumes:
   db_data:
+
+networks:
+  amnezia-panel-network:
+    driver: bridge
