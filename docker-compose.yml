@@ -39,9 +39,6 @@ services:
       - amnezia-data:/etc/amnezia
       - ssl:/etc/letsencrypt
 
-    networks:
-      - remnawave-network
-
 volumes:
   amnezia-data:
   ssl:
