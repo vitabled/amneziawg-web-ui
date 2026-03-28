@@ -205,59 +205,61 @@ version: '3.8'
 services:
   amnezia-web-ui:
     image: alexishw/amneziawg-web-ui:master
-    build: .
     container_name: amnezia-web-ui
-    ports:
-      - "8080:8080/tcp"
-      - "51820:51820/udp"
-    environment:
-      - NGINX_PORT=8080
-      - AUTO_START_SERVERS=true
-      - DEFAULT_MTU=1280
-    volumes:
-      - amnezia-data:/etc/amnezia
+
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
-    devices:
-      - /dev/net/tun
+
     sysctls:
-      - net.ipv4.ip_forward=1
-      - net.ipv4.conf.all.src_valid_mark=1
-      - net.ipv6.conf.all.disable_ipv6=0
-      - net.ipv6.conf.all.forwarding=1
-      - net.ipv6.conf.default.forwarding=1
+      net.ipv4.ip_forward: "1"
+      net.ipv4.conf.all.src_valid_mark: "1"
+      net.ipv6.conf.all.disable_ipv6: "0"
+      net.ipv6.conf.all.forwarding: "1"
+      net.ipv6.conf.default.forwarding: "1"
+
+    devices:
+      - /dev/net/tun:/dev/net/tun
+
     restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:9090:80/tcp"
+      - "51821:51821/udp"
+
+    environment:
+      NGINX_PORT: "80"
+      NGINX_USER: "1Jp0gi97XCfjEJitqhRk"
+      NGINX_PASSWORD: "R1dQdL628GswPHhQD1MmVvYRsf1EqivG"
+      AUTO_START_SERVERS: "false"
+      DEFAULT_MTU: "1420"
+      DEFAULT_SUBNET: "10.8.5.0/24"
+      DEFAULT_PORT: "51821"
+      DEFAULT_DNS: "8.8.8.8,8.8.4.4"
+      SSL_EMAIL: "test@email.com"
+      SSL_DOMAIN: "test.com"
+
+    volumes:
+      - amnezia-data:/etc/amnezia
+      - ssl:/etc/letsencrypt
+
+    networks:
+      - remnawave-network
+
 volumes:
   amnezia-data:
+  ssl:
+
+networks:
+  remnawave-network:
+    external: true
+
 ```
 
-### Пример Docker Run
+### Сборка и запуск
 
 ```bash
-docker run -d \
-  --name amnezia-web-ui \
-  --cap-add=NET_ADMIN \
-  --cap-add SYS_MODULE \
-  --sysctl net.ipv4.ip_forward=1 \
-  --sysctl net.ipv4.conf.all.src_valid_mark=1 \
-  --device /dev/net/tun \
-  --restart unless-stopped \
-  -p 80:80 \
-  -p 9090:9090 \
-  -p 51821:51821/udp \
-  -e NGINX_PORT=9090 \
-  -e NGINX_PASSWORD=1234 \
-  -e AUTO_START_SERVERS=false \
-  -e DEFAULT_MTU=1420 \
-  -e DEFAULT_SUBNET=10.8.0.0/24 \
-  -e DEFAULT_PORT=51821 \
-  -e DEFAULT_DNS="8.8.8.8,8.8.4.4" \
-  -e SSL_EMAIL="your@email.com" \
-  -e SSL_DOMAIN="your.domain.com" \
-  -v amnezia-data:/etc/amnezia \
-  -v ssl:/etc/letsencrypt \
-  alexishw/amneziawg-web-ui:master
+docker compose up --build -d
 ```
 
 ## Проблема с SSL-сертификатами
@@ -399,5 +401,3 @@ AmneziaWG поддерживает расширенную обфускацию �
 Поддержка не предоставляется, и регулярные обновления не планируются. Обнаруженные проблемы могут быть исправлены только при наличии свободного времени.
 
 Из России с L❤️VE
-
-```
