@@ -1,6 +1,6 @@
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
-# Install dependencies including LDAP
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -16,13 +16,13 @@ RUN apt-get update && apt-get install -y \
     libldap2-dev \
     && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd ldap \
-    && a2enmod rewrite \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
+# Working directory
 WORKDIR /var/www/html
 
 # Copy project files
@@ -31,10 +31,7 @@ COPY . /var/www/html
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Configure Apache
-COPY apache.conf /etc/apache2/sites-available/000-default.conf
-
-# Set permissions
+# Permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/public
 
@@ -50,18 +47,14 @@ RUN echo "0 * * * * www-data cd /var/www/html && /usr/local/bin/php bin/check_ex
     && touch /var/log/metrics_collector.log \
     && touch /var/log/ldap_sync.log
 
+RUN sed -i 's|^listen = .*|listen = 9000|' /usr/local/etc/php-fpm.d/zz-docker.conf
 # Make monitor script executable
 RUN chmod +x /var/www/html/bin/monitor_metrics.sh
 
-# Create startup script
-RUN echo '#!/bin/bash\n\
-service cron start\n\
-# Start metrics collector on container startup\n\
-/bin/bash /var/www/html/bin/monitor_metrics.sh\n\
-apache2-foreground' > /start.sh \
+# Startup script
+RUN printf '#!/bin/bash\nset -e\nservice cron start\nexec php-fpm\n' > /start.sh \
     && chmod +x /start.sh
 
-# Expose port 80
-EXPOSE 80
+EXPOSE 9000
 
 CMD ["/start.sh"]
