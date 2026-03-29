@@ -59,13 +59,28 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-amnezia}
     volumes:
       - ./:/var/www/html
+      - vendor_data:/var/www/html/vendor
+    networks:
+      - amnezia-panel-network
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: amnezia-panel-nginx
+    restart: unless-stopped
+    depends_on:
+      - web
     ports:
       - "8082:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - vendor_data:/var/www/html/vendor:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - amnezia-panel-network
 
 volumes:
   db_data:
+  vendor_data:
 
 networks:
   amnezia-panel-network:
