@@ -3,12 +3,17 @@ services:
     image: mysql:8.0
     container_name: amnezia-panel-db
     restart: unless-stopped
+    mem_limit: 300m
     command: >
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
       --default-authentication-plugin=mysql_native_password
-      --innodb-buffer-pool-size=32M
+      --innodb-buffer-pool-size=48M
+      --innodb-buffer-pool-chunk-size=16M
+      --innodb-buffer-pool-instances=1
       --innodb-log-buffer-size=4M
+      --innodb-flush-log-at-trx-commit=2
+      --innodb-flush-method=O_DIRECT
       --max-connections=20
       --performance-schema=OFF
       --table-open-cache=64
@@ -17,6 +22,8 @@ services:
       --thread-cache-size=4
       --sort-buffer-size=512K
       --join-buffer-size=512K
+      --key-buffer-size=8M
+
     env_file:
       - env
     environment:
