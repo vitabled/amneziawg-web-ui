@@ -1910,5 +1910,111 @@ Router::get('/api/translations/export/{lang}', function ($params) {
     }
 });
 
+// =============================================================================
+// НОВЫЕ РОУТЫ — вставить в public/index.php
+// после существующих роутов серверов (после /servers/{id}/sync-stats)
+// =============================================================================
+ 
+// Запустить AmneziaWG на сервере
+Router::post('/servers/{id}/start', function ($params) {
+    requireAuth();
+    header('Content-Type: application/json');
+    $serverId = (int)$params['id'];
+ 
+    try {
+        $server     = new VpnServer($serverId);
+        $serverData = $server->getData();
+ 
+        $user = Auth::user();
+        if ($serverData['user_id'] != $user['id'] && !Auth::isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+ 
+        $result = $server->start();
+        echo json_encode($result);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+});
+ 
+// Остановить AmneziaWG на сервере
+Router::post('/servers/{id}/stop', function ($params) {
+    requireAuth();
+    header('Content-Type: application/json');
+    $serverId = (int)$params['id'];
+ 
+    try {
+        $server     = new VpnServer($serverId);
+        $serverData = $server->getData();
+ 
+        $user = Auth::user();
+        if ($serverData['user_id'] != $user['id'] && !Auth::isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+ 
+        $result = $server->stop();
+        echo json_encode($result);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+});
+ 
+// Получить реальный статус интерфейса wg0
+Router::get('/servers/{id}/real-status', function ($params) {
+    requireAuth();
+    header('Content-Type: application/json');
+    $serverId = (int)$params['id'];
+ 
+    try {
+        $server = new VpnServer($serverId);
+        $serverData = $server->getData();
+ 
+        $user = Auth::user();
+        if ($serverData['user_id'] != $user['id'] && !Auth::isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+ 
+        $realStatus = $server->getRealStatus();
+        echo json_encode(['status' => $realStatus]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+});
+ 
+// Получить трафик всех клиентов через awg show (live)
+Router::get('/servers/{id}/traffic', function ($params) {
+    requireAuth();
+    header('Content-Type: application/json');
+    $serverId = (int)$params['id'];
+ 
+    try {
+        $server     = new VpnServer($serverId);
+        $serverData = $server->getData();
+ 
+        $user = Auth::user();
+        if ($serverData['user_id'] != $user['id'] && !Auth::isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+            return;
+        }
+ 
+        $traffic = $server->getTrafficStats();
+        echo json_encode(['success' => true, 'traffic' => $traffic]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+});
+ 
+
 // Dispatch router
 Router::dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
