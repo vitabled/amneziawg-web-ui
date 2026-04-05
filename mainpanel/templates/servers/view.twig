@@ -151,6 +151,52 @@
       </div>
     </div>
   </div>
+
+  <!-- AmneziaWG Control Panel -->
+  <div class="bg-white rounded shadow p-6 mb-8">
+    <h3 class="font-bold mb-4">
+      <i class="fas fa-shield-alt text-purple-600 mr-2"></i>AmneziaWG Control
+    </h3>
+    <div class="flex items-center mb-4">
+      <span class="text-sm text-gray-500 mr-2">Interface wg0:</span>
+      <span id="real-status-badge" class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-400">Checking...</span>
+    </div>
+    <div class="flex flex-wrap gap-3 mb-4">
+      <button id="btn-awg-start" onclick="awgAction('start')" disabled
+              class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed">
+        <i class="fas fa-play mr-2"></i>Start VPN
+      </button>
+      <button id="btn-awg-stop" onclick="awgAction('stop')" disabled
+              class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed">
+        <i class="fas fa-stop mr-2"></i>Stop VPN
+      </button>
+      <button onclick="loadLiveTraffic()"
+              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+        <i class="fas fa-chart-bar mr-2"></i>Live Traffic
+      </button>
+    </div>
+    <div id="awg-result" class="hidden p-3 rounded-md text-sm mb-4"></div>
+    <div id="awg-traffic-panel" class="hidden">
+      <p class="text-xs text-gray-500 mb-2">Data from <code class="bg-gray-100 px-1 rounded">awg show wg0</code></p>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Peer (public key)</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Received</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sent</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Last Handshake</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Endpoint</th>
+            </tr>
+          </thead>
+          <tbody id="awg-traffic-tbody" class="bg-white divide-y divide-gray-200">
+            <tr><td colspan="5" class="px-4 py-3 text-gray-400 text-center">Click "Live Traffic" to load</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- End AmneziaWG Control Panel -->
   <div class="bg-white rounded shadow">
     <div class="px-6 py-4 border-b flex justify-between items-center">
       <h3 class="font-bold">{{ t('clients.title') }} ({{ clients|length }})</h3>
@@ -705,5 +751,96 @@ if (document.querySelector('[id^="client-speed-"]')) {
   setInterval(updateClientSpeeds, 30000);
 }
 {% endif %}
+
+// AmneziaWG Control
+document.addEventListener('DOMContentLoaded', function() {
+  checkAwgStatus();
+});
+
+function checkAwgStatus() {
+  fetch('/servers/' + {{ server.id }} + '/real-status')
+    .then(r => r.json())
+    .then(d => updateAwgBadge(d.status))
+    .catch(() => updateAwgBadge('unknown'));
+}
+
+function updateAwgBadge(status) {
+  const badge    = document.getElementById('real-status-badge');
+  const btnStart = document.getElementById('btn-awg-start');
+  const btnStop  = document.getElementById('btn-awg-stop');
+  if (status === 'running') {
+    badge.className   = 'px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800';
+    badge.textContent = '● Running';
+    btnStart.disabled = true;
+    btnStop.disabled  = false;
+  } else if (status === 'stopped') {
+    badge.className   = 'px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800';
+    badge.textContent = '● Stopped';
+    btnStart.disabled = false;
+    btnStop.disabled  = true;
+  } else {
+    badge.className   = 'px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500';
+    badge.textContent = 'Unknown';
+    btnStart.disabled = false;
+    btnStop.disabled  = false;
+  }
+}
+
+function awgAction(action) {
+  const result = document.getElementById('awg-result');
+  result.className   = 'p-3 rounded-md text-sm bg-yellow-50 text-yellow-700 mb-4';
+  result.textContent = action === 'start' ? 'Starting...' : 'Stopping...';
+  result.classList.remove('hidden');
+  document.getElementById('btn-awg-start').disabled = true;
+  document.getElementById('btn-awg-stop').disabled  = true;
+  fetch('/servers/' + {{ server.id }} + '/' + action, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      result.className = d.success
+        ? 'p-3 rounded-md text-sm bg-green-50 text-green-700 mb-4'
+        : 'p-3 rounded-md text-sm bg-red-50 text-red-700 mb-4';
+      result.textContent = d.success
+        ? (action === 'start' ? '✓ VPN started successfully.' : '✓ VPN stopped successfully.')
+        : ('✗ Error: ' + (d.error || 'Unknown error'));
+      checkAwgStatus();
+    })
+    .catch(e => {
+      result.className   = 'p-3 rounded-md text-sm bg-red-50 text-red-700 mb-4';
+      result.textContent = '✗ Request failed: ' + e.message;
+      checkAwgStatus();
+    });
+}
+
+function loadLiveTraffic() {
+  const panel = document.getElementById('awg-traffic-panel');
+  const tbody = document.getElementById('awg-traffic-tbody');
+  panel.classList.remove('hidden');
+  tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-3 text-gray-400 text-center"><i class="fas fa-spinner fa-spin mr-1"></i> Loading...</td></tr>';
+  fetch('/servers/' + {{ server.id }} + '/traffic')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.success || !d.traffic || !Object.keys(d.traffic).length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-3 text-gray-400 text-center">No peers connected or VPN is stopped.</td></tr>';
+        return;
+      }
+      let rows = '';
+      for (const [pk, p] of Object.entries(d.traffic)) {
+        const online = p.last_handshake_epoch && (Math.floor(Date.now() / 1000) - p.last_handshake_epoch) < 300;
+        const dot = '<span class="inline-block w-2 h-2 rounded-full ' + (online ? 'bg-green-500' : 'bg-gray-300') + ' mr-1 align-middle"></span>';
+        rows += '<tr>'
+          + '<td class="px-4 py-2 font-mono text-xs text-gray-600" title="' + pk + '">' + dot + pk.substring(0, 16) + '...</td>'
+          + '<td class="px-4 py-2 text-green-700">' + p.received + '</td>'
+          + '<td class="px-4 py-2 text-blue-700">' + p.sent + '</td>'
+          + '<td class="px-4 py-2 text-gray-500">' + p.last_handshake + '</td>'
+          + '<td class="px-4 py-2 text-gray-500">' + (p.endpoint || '—') + '</td>'
+          + '</tr>';
+      }
+      tbody.innerHTML = rows;
+    })
+    .catch(e => {
+      tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-3 text-red-500 text-center">Error: ' + e.message + '</td></tr>';
+    });
+}
+
 </script>
 {% endblock %}
