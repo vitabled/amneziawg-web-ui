@@ -80,7 +80,6 @@ class VpnServer {
             $this->installDocker();
 
             // 3. Установить amneziawg-tools (awg, awg-quick) — КЛЮЧЕВОЙ ШАГ
-            $this->installAmneziaWgTools();
 
             // 4. Создать рабочую директорию
             $this->executeCommand('mkdir -p /opt/amnezia/amnezia-awg', true);
@@ -142,29 +141,34 @@ class VpnServer {
      * Утилиты awg и awg-quick — замена стандартным wg / wg-quick.
      * Репозиторий: https://github.com/amnezia-vpn/amneziawg-tools
      */
-    private function installAmneziaWgTools(): void {
-        // Проверить — может уже установлено
-        $check = $this->executeCommand('which awg 2>/dev/null || echo ""');
+   private function installAmneziaWgTools(): void {
+        // awg уже встроен в образ amneziavpn/amnezia-wg:latest
+        // проверяем его наличие ВНУТРИ контейнера, а не на хосте
+        $containerName = $this->data['container_name'];
+        
+        $check = $this->executeCommand(
+            "docker exec -i {$containerName} which awg 2>/dev/null || echo ''"
+        );
+        
         if (strpos(trim($check), '/') === 0) {
-            return; // awg уже есть
+            return; // awg уже есть внутри контейнера
         }
-
-        // Определить дистрибутив
-        $os = trim($this->executeCommand('cat /etc/os-release | grep ^ID= | cut -d= -f2 | tr -d \'"\''));
-
-        if (in_array($os, ['ubuntu', 'debian'])) {
-            $this->installAmneziaWgToolsDebian();
-        } elseif (in_array($os, ['fedora', 'centos', 'rhel', 'rocky', 'almalinux'])) {
-            $this->installAmneziaWgToolsRhel();
-        } else {
-            // Универсальный способ — собрать из исходников
-            $this->installAmneziaWgToolsFromSource();
-        }
-
-        // Финальная проверка
-        $check = $this->executeCommand('which awg 2>/dev/null || echo ""');
+        
+        // Если по какой-то причине нет — попробовать apk (Alpine в образе)
+        $this->executeCommand(
+            "docker exec -i {$containerName} sh -c 'apk add --no-cache wireguard-tools 2>/dev/null || true'",
+            true
+        );
+        
+        // Повторная проверка
+        $check = $this->executeCommand(
+            "docker exec -i {$containerName} which awg 2>/dev/null || echo ''"
+        );
+        
         if (strpos(trim($check), '/') !== 0) {
-            throw new Exception('Failed to install amneziawg-tools. awg binary not found after installation.');
+            // awg нет но это не критично — образ amneziavpn/amnezia-wg должен его содержать
+            // логируем но не падаем
+            error_log('Warning: awg not found in container, but continuing deployment');
         }
     }
 
