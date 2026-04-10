@@ -100,7 +100,7 @@ class VpnClient {
         // Используем awg вместо wg
         $cmd = sprintf(
             "docker exec -i %s sh -c \"umask 077;"
-            . " awg genkey | tee /tmp/%s_priv.key | awg pubkey > /tmp/%s_pub.key;"
+            . " wg genkey | tee /tmp/%s_priv.key | wg pubkey > /tmp/%s_pub.key;"
             . " cat /tmp/%s_priv.key; echo '---'; cat /tmp/%s_pub.key;"
             . " rm -f /tmp/%s_priv.key /tmp/%s_pub.key\"",
             $containerName,
@@ -223,7 +223,7 @@ class VpnClient {
         // (аналог apply_live_config из app.py)
         self::executeServerCommand($serverData,
             "docker exec -i {$containerName} bash -c"
-            . " 'awg syncconf wg0 <(awg-quick strip /opt/amnezia/awg/wg0.conf)' 2>&1",
+            . " 'wg syncconf wg0 <(wg-quick strip /opt/amnezia/awg/wg0.conf)' 2>&1",
             true
         );
 
@@ -267,7 +267,7 @@ class VpnClient {
 
         // Живое удаление через awg set ... remove
         self::executeServerCommand($serverData,
-            "docker exec -i {$containerName} awg set wg0 peer " . escapeshellarg($publicKey) . " remove",
+            "docker exec -i {$containerName} wg set wg0 peer " . escapeshellarg($publicKey) . " remove",
             true
         );
 
@@ -421,7 +421,7 @@ class VpnClient {
 
         // awg show wg0 dump — вместо wg show wg0 dump
         $output = self::executeServerCommand($serverData,
-            "docker exec -i {$containerName} awg show wg0 dump 2>/dev/null || echo ''",
+            "docker exec -i {$containerName} wg show wg0 dump 2>/dev/null || echo ''",
             true
         );
 

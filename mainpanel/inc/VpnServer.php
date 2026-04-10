@@ -331,12 +331,12 @@ BASH;
         $this->executeCommand(
             "docker exec -i {$containerName} sh -c "
             . "'cd /opt/amnezia/awg && umask 077"
-            . " && awg genkey | tee server_private.key | awg pubkey > wireguard_server_public_key.key'",
+            . " && wg genkey | tee server_private.key | wg pubkey > wireguard_server_public_key.key'",
             true
         );
         $this->executeCommand(
             "docker exec -i {$containerName} sh -c "
-            . "'cd /opt/amnezia/awg && awg genpsk > wireguard_psk.key'",
+            . "'cd /opt/amnezia/awg && wg genpsk > wireguard_psk.key'",
             true
         );
         $this->executeCommand(
@@ -451,7 +451,7 @@ BASH;
         $containerName = $this->data['container_name'];
 
         $result = $this->executeCommand(
-            "docker exec -i {$containerName} awg-quick up /opt/amnezia/awg/wg0.conf 2>&1",
+            "docker exec -i {$containerName} wg-quick up /opt/amnezia/awg/wg0.conf 2>&1",
             true
         );
 
@@ -472,7 +472,7 @@ BASH;
         $containerName = $this->data['container_name'];
 
         $result = $this->executeCommand(
-            "docker exec -i {$containerName} awg-quick down /opt/amnezia/awg/wg0.conf 2>&1",
+            "docker exec -i {$containerName} wg-quick down /opt/amnezia/awg/wg0.conf 2>&1",
             true
         );
 
@@ -519,7 +519,7 @@ BASH;
 
         $result = $this->executeCommand(
             "docker exec -i {$containerName} bash -c"
-            . " 'awg syncconf wg0 <(awg-quick strip /opt/amnezia/awg/wg0.conf)' 2>&1",
+            . " 'awg syncconf wg0 <(wg-quick strip /opt/amnezia/awg/wg0.conf)' 2>&1",
             true
         );
 
@@ -541,7 +541,7 @@ BASH;
         $containerName = $this->data['container_name'];
 
         $output = $this->executeCommand(
-            "docker exec -i {$containerName} awg show wg0 2>/dev/null || echo ''",
+            "docker exec -i {$containerName} wg show wg0 2>/dev/null || echo ''",
             true
         );
 
@@ -615,19 +615,31 @@ BASH;
 
     public function testConnection(): bool {
         $testCmd = sprintf(
-            "sshpass -p '%s' ssh -p %d"
-            . " -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-            . " -o PreferredAuthentications=password -o PubkeyAuthentication=no"
+            "sshpass -p %s ssh -p %d"
+            . " -o UserKnownHostsFile=/dev/null"
+            . " -o StrictHostKeyChecking=no"
+            . " -o PreferredAuthentications=password"
+            . " -o PubkeyAuthentication=no"
             . " -o ConnectTimeout=10"
-            . " %s@%s 'echo test' 2>/dev/null",
-            $this->data['password'],
+            . " %s@%s 'echo test' 2>&1",
+            escapeshellarg($this->data['password']),
             $this->data['port'],
-            $this->data['username'],
-            $this->data['host']
+            escapeshellarg($this->data['username']),
+            escapeshellarg($this->data['host'])
         );
 
         $result = shell_exec($testCmd);
-        return trim($result) === 'test';
+        error_log("SSH test result: " . var_export($result, true));
+
+        if ($result === null) {
+            throw new Exception('SSH command failed to execute (shell_exec returned null). Check if sshpass is installed.');
+        }
+
+        if (trim($result) !== 'test') {
+            throw new Exception('SSH connection failed. Server response: ' . trim($result));
+        }
+
+        return true;
     }
 
     public function executeCommand(string $command, bool $sudo = false): string {
