@@ -256,11 +256,11 @@ for i in {1..30}; do
 done
 
 # Остановить если был запущен (на случай рестарта)
-awg-quick down /opt/amnezia/awg/wg0.conf 2>/dev/null || true
+wg-quick down /opt/amnezia/awg/wg0.conf 2>/dev/null || true
 
 # Запустить AmneziaWG если конфиг есть
 if [ -f /opt/amnezia/awg/wg0.conf ]; then
-    awg-quick up /opt/amnezia/awg/wg0.conf
+    wg-quick up /opt/amnezia/awg/wg0.conf
     echo "AmneziaWG started"
 else
     echo "No wg0.conf found, waiting..."
@@ -352,6 +352,14 @@ BASH;
         $pubKey  = trim($this->executeCommand("docker exec -i {$containerName} cat /opt/amnezia/awg/wireguard_server_public_key.key", true));
         $psk     = trim($this->executeCommand("docker exec -i {$containerName} cat /opt/amnezia/awg/wireguard_psk.key", true));
 
+        // диагностика
+        error_log("privKey: " . var_export($privKey, true));
+        error_log("pubKey: " . var_export($pubKey, true));
+
+        // что вообще есть в директории:
+        $lsResult = $this->executeCommand("docker exec -i {$containerName} ls -la /opt/amnezia/awg/ 2>&1", true);
+        error_log("ls result: " . $lsResult);
+
         if (empty($privKey) || empty($pubKey)) {
             throw new Exception('Failed to generate server keys inside container. Is amneziawg-tools installed in the image?');
         }
@@ -381,7 +389,7 @@ BASH;
 
         // Запустить AmneziaWG через awg-quick (не wg-quick!)
         $upResult = $this->executeCommand(
-            "docker exec -i {$containerName} awg-quick up /opt/amnezia/awg/wg0.conf 2>&1",
+            "docker exec -i {$containerName} wg-quick up /opt/amnezia/awg/wg0.conf 2>&1",
             true
         );
         error_log("awg-quick up result: " . $upResult);
@@ -519,7 +527,7 @@ BASH;
 
         $result = $this->executeCommand(
             "docker exec -i {$containerName} bash -c"
-            . " 'awg syncconf wg0 <(wg-quick strip /opt/amnezia/awg/wg0.conf)' 2>&1",
+            . " 'wg syncconf wg0 <(wg-quick strip /opt/amnezia/awg/wg0.conf)' 2>&1",
             true
         );
 
@@ -615,7 +623,8 @@ BASH;
 
     public function testConnection(): bool {
         $testCmd = sprintf(
-            "sshpass -p %s ssh -p %d"
+            "sshpass -p %s ssh -p %d -q"
+            . " -o LogLevel=ERROR"
             . " -o UserKnownHostsFile=/dev/null"
             . " -o StrictHostKeyChecking=no"
             . " -o PreferredAuthentications=password"
@@ -629,31 +638,37 @@ BASH;
         );
 
         $result = shell_exec($testCmd);
-        error_log("SSH test result: " . var_export($result, true));
 
         if ($result === null) {
-            throw new Exception('SSH command failed to execute (shell_exec returned null). Check if sshpass is installed.');
+            throw new Exception('SSH command failed to execute. Check if sshpass is installed.');
         }
 
-        if (trim($result) !== 'test') {
-            throw new Exception('SSH connection failed. Server response: ' . trim($result));
+        // Фильтруем строки с варнингами, ищем только 'test'
+        $lines = explode("\n", trim($result));
+        foreach ($lines as $line) {
+            if (trim($line) === 'test') {
+                return true;
+            }
         }
 
-        return true;
+        throw new Exception('SSH connection failed. Server response: ' . trim($result));
     }
 
-    public function executeCommand(string $command, bool $sudo = false): string {
+   public function executeCommand(string $command, bool $sudo = false): string {
         if ($sudo && strtolower($this->data['username']) !== 'root') {
             $command = "echo '{$this->data['password']}' | sudo -S " . $command;
         }
 
         $escapedCmd = escapeshellarg($command);
         $sshCmd = sprintf(
-            "sshpass -p '%s' ssh -p %d -q"
-            . " -o LogLevel=ERROR -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-            . " -o PreferredAuthentications=password -o PubkeyAuthentication=no"
-            . " %s@%s %s 2>&1",
-            $this->data['password'],
+            "sshpass -p %s ssh -p %d -q"
+            . " -o LogLevel=ERROR"
+            . " -o UserKnownHostsFile=/dev/null"
+            . " -o StrictHostKeyChecking=no"
+            . " -o PreferredAuthentications=password"
+            . " -o PubkeyAuthentication=no"
+            . " %s@%s %s 2>&1",  // вернуть 2>&1 — иначе вывод команд теряется
+            escapeshellarg($this->data['password']),
             $this->data['port'],
             $this->data['username'],
             $this->data['host'],

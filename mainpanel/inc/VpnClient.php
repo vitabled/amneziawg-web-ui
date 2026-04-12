@@ -98,15 +98,17 @@ class VpnClient {
         $containerName = $serverData['container_name'];
 
         // Используем awg вместо wg
+        $safeName = bin2hex(random_bytes(8)); // вместо $clientName в пути
+
         $cmd = sprintf(
             "docker exec -i %s sh -c \"umask 077;"
             . " wg genkey | tee /tmp/%s_priv.key | wg pubkey > /tmp/%s_pub.key;"
             . " cat /tmp/%s_priv.key; echo '---'; cat /tmp/%s_pub.key;"
             . " rm -f /tmp/%s_priv.key /tmp/%s_pub.key\"",
             $containerName,
-            $clientName, $clientName,
-            $clientName, $clientName,
-            $clientName, $clientName
+            $safeName, $safeName,
+            $safeName, $safeName,
+            $safeName, $safeName
         );
 
         $out = self::executeServerCommand($serverData, $cmd, true);
@@ -206,29 +208,18 @@ class VpnClient {
         $peerBlock .= "PresharedKey = {$serverData['preshared_key']}\n";
         $peerBlock .= "AllowedIPs = {$clientIP}/32\n";
 
-        // Записать во временный файл и дозаписать в wg0.conf
-        $tmpFile = '/tmp/' . bin2hex(random_bytes(8)) . '.tmp';
+        // Передаём через stdin напрямую в контейнер — без временных файлов
         $b64 = base64_encode($peerBlock);
-
         self::executeServerCommand($serverData,
-            "echo '{$b64}' | base64 -d > {$tmpFile}",
-            true
-        );
-        self::executeServerCommand($serverData,
-            "docker exec -i {$containerName} sh -c 'cat {$tmpFile} >> /opt/amnezia/awg/wg0.conf'",
+            "echo '{$b64}' | base64 -d | docker exec -i {$containerName} sh -c 'cat >> /opt/amnezia/awg/wg0.conf'",
             true
         );
 
-        // Применить конфиг без перезапуска — awg syncconf
-        // (аналог apply_live_config из app.py)
+        // Применить конфиг без перезапуска интерфейса
         self::executeServerCommand($serverData,
-            "docker exec -i {$containerName} bash -c"
-            . " 'wg syncconf wg0 <(wg-quick strip /opt/amnezia/awg/wg0.conf)' 2>&1",
+            "docker exec -i {$containerName} bash -c 'wg syncconf wg0 <(wg-quick strip /opt/amnezia/awg/wg0.conf)' 2>&1",
             true
         );
-
-        // Удалить временный файл на хосте
-        self::executeServerCommand($serverData, "rm -f {$tmpFile}", true);
 
         // Обновить clientsTable
         self::updateClientsTable($serverData, $publicKey, $clientIP);
@@ -355,15 +346,15 @@ class VpnClient {
         }
 
         $escapedCmd = escapeshellarg($command);
-        $sshCmd = sprintf(
-            "sshpass -p '%s' ssh -p %d -q"
+       $sshCmd = sprintf(
+            "sshpass -p %s ssh -p %d -q"   // убрали кавычки вокруг %s
             . " -o LogLevel=ERROR -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
             . " -o PreferredAuthentications=password -o PubkeyAuthentication=no"
             . " %s@%s %s 2>&1",
-            $serverData['password'],
+            escapeshellarg($serverData['password']),  // escapeshellarg сам добавит кавычки
             $serverData['port'],
-            $serverData['username'],
-            $serverData['host'],
+            escapeshellarg($serverData['username']),
+            escapeshellarg($serverData['host']),
             $escapedCmd
         );
 
